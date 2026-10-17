@@ -1,0 +1,23 @@
+{
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/api/articles",
+      "destination": "/data/articles.json"
+    },
+    {
+      "source": "/api/transcript",
+      "destination": "/data/transcript.json"
+    },
+    {
+      "source": "/api/references",
+      "destination": "/data/references.json"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

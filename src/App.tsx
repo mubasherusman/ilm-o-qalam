@@ -18,11 +18,52 @@ import {
 
 export default function App() {
   // Navigation & Search State
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [articlesList, setArticlesList] = useState<Article[]>(ARTICLES);
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(() => {
+    if (typeof window !== 'undefined') {
+      const match = window.location.pathname.match(/^\/article\/([^/?]+)/);
+      if (match) {
+        const slug = match[1];
+        return ARTICLES.find(a => a.slug === slug || a.id === slug) || null;
+      }
+    }
+    return null;
+  });
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [showBookmarksOnly, setShowBookmarksOnly] = useState<boolean>(false);
+
+  // Fetch dynamic updates from JSON files / API
+  useEffect(() => {
+    let mounted = true;
+    import('./data/articlesData').then(({ fetchArticlesFromJSON }) => {
+      fetchArticlesFromJSON().then(fetched => {
+        if (mounted && fetched && fetched.length > 0) {
+          setArticlesList(fetched);
+        }
+      });
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Listen to browser Back/Forward (popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      const match = window.location.pathname.match(/^\/article\/([^/?]+)/);
+      if (match) {
+        const slug = match[1];
+        const found = articlesList.find(a => a.slug === slug || a.id === slug);
+        setSelectedArticle(found || null);
+      } else {
+        setSelectedArticle(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [articlesList]);
 
   // Bookmarking with local persistence
   const [bookmarkedIds, setBookmarkedIds] = useState<string[]>(() => {
@@ -60,13 +101,14 @@ export default function App() {
     setSearchQuery(tag);
     if (selectedArticle) {
       setSelectedArticle(null);
+      window.history.pushState(null, '', '/');
     }
     window.scrollTo({ top: 350, behavior: 'smooth' });
   };
 
   // Filtered Articles
   const filteredArticles = useMemo(() => {
-    return ARTICLES.filter(art => {
+    return articlesList.filter(art => {
       // Category filter
       if (activeCategory !== 'all' && art.category !== activeCategory) {
         return false;
@@ -89,7 +131,7 @@ export default function App() {
       }
       return true;
     });
-  }, [activeCategory, showBookmarksOnly, bookmarkedIds, searchQuery]);
+  }, [articlesList, activeCategory, showBookmarksOnly, bookmarkedIds, searchQuery]);
 
   return (
     <div
@@ -103,7 +145,10 @@ export default function App() {
         activeCategory={activeCategory}
         onSelectCategory={cat => {
           setActiveCategory(cat);
-          if (selectedArticle) setSelectedArticle(null);
+          if (selectedArticle) {
+            setSelectedArticle(null);
+            window.history.pushState(null, '', '/');
+          }
         }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -117,6 +162,7 @@ export default function App() {
           setSearchQuery('');
           setSelectedTag(null);
           setShowBookmarksOnly(false);
+          window.history.pushState(null, '', '/');
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         isArticleView={!!selectedArticle}
@@ -129,10 +175,12 @@ export default function App() {
           article={selectedArticle}
           onBack={() => {
             setSelectedArticle(null);
+            window.history.pushState(null, '', '/');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           onSelectRelatedArticle={art => {
             setSelectedArticle(art);
+            window.history.pushState(null, '', `/article/${art.slug}`);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           fontSize={fontSize}
@@ -227,6 +275,7 @@ export default function App() {
                   article={article}
                   onSelectArticle={art => {
                     setSelectedArticle(art);
+                    window.history.pushState(null, '', `/article/${art.slug}`);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   isBookmarked={bookmarkedIds.includes(article.id)}

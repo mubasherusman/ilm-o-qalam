@@ -1,5 +1,6 @@
 import React from 'react';
 import { Article } from '../data/articlesData';
+import { ArticleDisclaimer } from './ArticleDisclaimer';
 import { Clock, Bookmark, ArrowLeft, User, Sparkles, Volume2 } from 'lucide-react';
 
 interface ArticleCardProps {
@@ -46,20 +47,23 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             )}
           </div>
 
-          <button
-            onClick={e => {
-              e.stopPropagation();
-              onToggleBookmark(article.id);
-            }}
-            className={`p-1.5 rounded-lg border transition-colors ${
-              isBookmarked
-                ? 'bg-amber-50 text-amber-600 border-amber-300'
-                : 'text-stone-400 hover:text-stone-600 border-stone-200 hover:bg-stone-50'
-            }`}
-            title={isBookmarked ? 'محفوظ کردہ سے ہٹائیں' : 'مقالہ محفوظ کریں'}
-          >
-            <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-500' : ''}`} />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <ArticleDisclaimer article={article} variant="badge" />
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                onToggleBookmark(article.id);
+              }}
+              className={`p-1.5 rounded-lg border transition-colors ${
+                isBookmarked
+                  ? 'bg-amber-50 text-amber-600 border-amber-300'
+                  : 'text-stone-400 hover:text-stone-600 border-stone-200 hover:bg-stone-50'
+              }`}
+              title={isBookmarked ? 'محفوظ کردہ سے ہٹائیں' : 'مقالہ محفوظ کریں'}
+            >
+              <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-500' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {/* Title */}

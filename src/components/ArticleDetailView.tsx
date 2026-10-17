@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Article, ARTICLES } from '../data/articlesData';
 import { TranscriptArticleSection } from './TranscriptArticleSection';
+import { ArticleDisclaimer } from './ArticleDisclaimer';
 import {
   ArrowRight,
   Clock,
@@ -192,7 +193,7 @@ export const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex flex-wrap items-center gap-3 text-xs">
             <span className="flex items-center gap-1 text-stone-600">
               <Calendar className="w-3.5 h-3.5" />
               <span>{article.publishedDate}</span>
@@ -202,6 +203,9 @@ export const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({
               <Clock className="w-3.5 h-3.5" />
               <span>{article.readTimeMinutes} منٹ مطالعہ</span>
             </span>
+            <span>•</span>
+            {/* Disclaimer Badge Trigger with (i) icon */}
+            <ArticleDisclaimer article={article} variant="badge" />
           </div>
         </div>
 
@@ -219,7 +223,10 @@ export const ArticleDetailView: React.FC<ArticleDetailViewProps> = ({
       </header>
 
       {/* Article Content */}
-      <main className="space-y-8">
+      <main className="space-y-6">
+        {/* Default Article Disclaimer Banner at start of article */}
+        <ArticleDisclaimer article={article} variant="banner" />
+
         {article.isTranscriptArticle ? (
           // Transcript interactive section
           <TranscriptArticleSection

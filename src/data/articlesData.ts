@@ -205,3 +205,47 @@ export const ARTICLES: Article[] = [
 ہمارا نعرہ وہی ہے جو رسول اللہ ﷺ کے صحابہ کا تھا: **"مسلم علمی کتابی"** بننا، کسی شخصیت یا فرقے کے تعصب میں حقائق سے آنکھیں نہ چرانا، اور تمام مسلمانوں کو کلمہ توحید کی بنیاد پر بھائی سمجھنا۔`
   }
 ];
+
+/**
+ * Asynchronously fetch articles from the backend API or JSON data file.
+ * Returns cached baseline articles immediately as a fast fallback.
+ */
+export async function fetchArticlesFromJSON(): Promise<Article[]> {
+  try {
+    const res = await fetch('/api/articles');
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        return json.data;
+      }
+    }
+    // Fallback to static JSON file directly
+    const staticRes = await fetch('/data/articles.json');
+    if (staticRes.ok) {
+      const data = await staticRes.json();
+      if (Array.isArray(data)) return data;
+    }
+  } catch (err) {
+    console.warn('Network fetch failed, using fallback articles data:', err);
+  }
+  return ARTICLES;
+}
+
+/**
+ * Asynchronously fetch a single article by slug or ID
+ */
+export async function fetchArticleBySlug(slug: string): Promise<Article | undefined> {
+  try {
+    const res = await fetch(`/api/articles/${encodeURIComponent(slug)}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.success && json.data) {
+        return json.data;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return ARTICLES.find(a => a.slug === slug || a.id === slug);
+}
+
