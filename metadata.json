@@ -1,0 +1,6 @@
+{
+  "name": "فکر و قلم – اردو مضامین و مقالات پورٹل",
+  "description": "فکر و قلم پر مستند اسلامی مضامین، تحقیقی مقالات اور صوتی ٹرانسکرپٹس پڑھیں۔ ارسال الیدین، تاریخ اسلام اور فقہی مباحث کے مستند دلائل و نصوص۔",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
