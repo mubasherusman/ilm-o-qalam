@@ -88,15 +88,15 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
         <div className="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto font-naskh text-xs">
           <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 text-center">
             <span className="block font-bold text-emerald-400 text-base font-mono">{totalArticles}</span>
-            <span className="text-stone-400">جامع مضامین</span>
+            <span className="text-stone-400">جامع مقالات</span>
           </div>
           <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 text-center">
-            <span className="block font-bold text-emerald-400 text-base font-mono">42:37</span>
-            <span className="text-stone-400">صوتی ٹرانسکرپٹ</span>
+            <span className="block font-bold text-emerald-400 text-base font-mono">17</span>
+            <span className="text-stone-400">تحقیقی ابواب</span>
           </div>
           <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 text-center">
-            <span className="block font-bold text-emerald-400 text-base font-mono">22</span>
-            <span className="text-stone-400">تفصیلی ابواب</span>
+            <span className="block font-bold text-emerald-400 text-base font-mono">10+</span>
+            <span className="text-stone-400">صحابہ و ائمہ کے دلائل</span>
           </div>
           <div className="bg-white/5 rounded-xl p-2.5 border border-white/5 text-center">
             <span className="block font-bold text-emerald-400 text-base font-mono">100%</span>

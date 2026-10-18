@@ -65,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-stone-500 font-naskh leading-tight">
-              جامع اردو مضامین، تحقیقی مقالات و صوتی ٹرانسکرپٹ
+              جامع اردو مضامین، تحقیقی مقالات و علمی ابواب
             </p>
           </div>
         </div>

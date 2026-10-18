@@ -102,12 +102,11 @@ async function createServer() {
     });
   });
 
-  // GET /api/transcript (Full transcript sections)
+  // GET /api/transcript (Full essay sections)
   app.get('/api/transcript', (_req: Request, res: Response) => {
     res.json({
       success: true,
       totalSections: transcriptSections.length,
-      duration: '42:37',
       data: transcriptSections,
     });
   });

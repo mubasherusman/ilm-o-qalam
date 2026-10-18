@@ -1,7 +1,7 @@
 import React from 'react';
 import { Article } from '../data/articlesData';
 import { ArticleDisclaimer } from './ArticleDisclaimer';
-import { Clock, Bookmark, ArrowLeft, User, Sparkles, Volume2 } from 'lucide-react';
+import { Clock, Bookmark, ArrowLeft, User, Sparkles, BookOpen } from 'lucide-react';
 
 interface ArticleCardProps {
   article: Article;
@@ -41,8 +41,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             )}
             {article.isTranscriptArticle && (
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-800 border border-teal-200">
-                <Volume2 className="w-3 h-3 text-teal-600" />
-                <span>صوتی ٹرانسکرپٹ</span>
+                <BookOpen className="w-3 h-3 text-teal-600" />
+                <span>17 ابواب مقالہ</span>
               </span>
             )}
           </div>

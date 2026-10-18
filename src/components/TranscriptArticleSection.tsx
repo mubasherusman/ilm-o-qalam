@@ -1,15 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   TRANSCRIPT_SECTIONS,
   HADITH_REFERENCES,
   FULL_TRANSCRIPT_URDU,
-  TranscriptSection
+  ArticleSection
 } from '../data/transcriptionData';
 import {
-  Play,
-  Pause,
-  RotateCcw,
-  Volume2,
   Copy,
   Check,
   Download,
@@ -18,12 +14,8 @@ import {
   BookmarkCheck,
   Search,
   CheckCircle2,
-  User,
   BookOpen,
-  ListFilter,
-  Sparkles,
-  ChevronDown,
-  ChevronUp
+  FileText
 } from 'lucide-react';
 
 interface TranscriptArticleSectionProps {
@@ -38,69 +30,11 @@ export const TranscriptArticleSection: React.FC<TranscriptArticleSectionProps> =
   fontFamily
 }) => {
   const [viewMode, setViewMode] = useState<'chapters' | 'continuous' | 'references'>('chapters');
-  const [selectedSpeaker, setSelectedSpeaker] = useState<'all' | 'سائل' | 'انجینئر محمد علی مرزا'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSectionId, setActiveSectionId] = useState<string>('sec-01');
   const [bookmarkedSecIds, setBookmarkedSecIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Audio simulator state
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [currentSeconds, setCurrentSeconds] = useState<number>(0);
-  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
-  const totalSeconds = 2557; // 42:37
-
   const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
-
-  // Audio ticker
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        setCurrentSeconds(prev => {
-          if (prev >= totalSeconds) {
-            setIsPlaying(false);
-            return totalSeconds;
-          }
-          return prev + 1;
-        });
-      }, 1000 / playbackSpeed);
-    }
-    return () => clearInterval(interval);
-  }, [isPlaying, playbackSpeed, totalSeconds]);
-
-  // Sync active section with player
-  useEffect(() => {
-    if (isPlaying) {
-      const currentSec = TRANSCRIPT_SECTIONS.find(
-        s => currentSeconds >= s.startSeconds && currentSeconds <= s.endSeconds
-      );
-      if (currentSec && currentSec.id !== activeSectionId) {
-        setActiveSectionId(currentSec.id);
-        const el = sectionRefs.current[currentSec.id];
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }
-    }
-  }, [currentSeconds, isPlaying, activeSectionId]);
-
-  const formatTime = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = Math.floor(secs % 60);
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  };
-
-  const handleSeek = (secs: number, secId?: string) => {
-    setCurrentSeconds(secs);
-    if (secId) {
-      setActiveSectionId(secId);
-      const el = sectionRefs.current[secId];
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  };
 
   const copyText = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -108,16 +42,14 @@ export const TranscriptArticleSection: React.FC<TranscriptArticleSectionProps> =
     setTimeout(() => setCopiedId(null), 2500);
   };
 
-  const downloadTranscript = () => {
+  const downloadArticle = () => {
     const element = document.createElement('a');
-    const header = `مکمل اردو صوتی ٹرانسکرپٹ
-موضوع: مسئلہ ارسال الیدین و وضع الیدین (ہاتھ چھوڑ کر اور باندھ کر نماز پڑھنا)
-مقرر: انجینئر محمد علی مرزا
-کل دورانیہ: 42 منٹ 37 سیکنڈ
+    const header = `تحقیقی مقالہ: مسئلہ ارسال الیدین اور وضع الیدین کی شرعی حیثیت
+کتبِ احادیث، فقہ مالکی اور آثارِ سلف کی روشنی میں تحقیقی و اسنادی مطالعہ
 ======================================================\n\n`;
     const file = new Blob([header + FULL_TRANSCRIPT_URDU], { type: 'text/plain;charset=utf-8' });
     element.href = URL.createObjectURL(file);
-    element.download = 'Urdu_Transcript_Irsal_al_Yadayn.txt';
+    element.download = 'Article_Irsal_al_Yadayn.txt';
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -130,7 +62,6 @@ export const TranscriptArticleSection: React.FC<TranscriptArticleSectionProps> =
   };
 
   const filteredSections = TRANSCRIPT_SECTIONS.filter(sec => {
-    if (selectedSpeaker !== 'all' && sec.speaker !== selectedSpeaker) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       return (
@@ -144,130 +75,87 @@ export const TranscriptArticleSection: React.FC<TranscriptArticleSectionProps> =
 
   return (
     <div className="space-y-6">
-      {/* Audio Player Card */}
-      <div className="bg-stone-900 text-stone-100 rounded-2xl p-4 sm:p-6 shadow-md border border-stone-800">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
-            <button
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="w-11 h-11 rounded-full bg-emerald-500 hover:bg-emerald-400 text-stone-950 flex items-center justify-center font-bold transition-transform active:scale-95 shrink-0 shadow-lg"
-              title={isPlaying ? 'روکیں' : 'آڈیو چلائیں'}
-            >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-            </button>
-
-            <button
-              onClick={() => setCurrentSeconds(0)}
-              className="text-stone-400 hover:text-stone-200 p-2 rounded-lg hover:bg-stone-800 transition-colors"
-              title="آڈیو شروع سے چلائیں"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-2 text-sm font-mono text-stone-300">
-              <span className="text-emerald-400 font-bold">{formatTime(currentSeconds)}</span>
-              <span className="text-stone-600">/</span>
-              <span className="text-stone-400">42:37</span>
-            </div>
-
-            {/* Speed toggle */}
-            <div className="flex items-center bg-stone-800 rounded-lg p-0.5 text-xs font-mono">
-              {[1, 1.25, 1.5].map(spd => (
-                <button
-                  key={spd}
-                  onClick={() => setPlaybackSpeed(spd)}
-                  className={`px-2 py-1 rounded ${
-                    playbackSpeed === spd
-                      ? 'bg-emerald-600 text-white font-bold'
-                      : 'text-stone-400 hover:text-white'
-                  }`}
-                >
-                  {spd}x
-                </button>
-              ))}
-            </div>
+      {/* Top Editorial Action Bar (Clean Essay Style, replacing audio player) */}
+      <div className="bg-stone-900 text-stone-100 rounded-2xl p-4 sm:p-5 shadow-sm border border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-4 font-naskh">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="w-10 h-10 rounded-xl bg-emerald-600/30 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0">
+            <BookOpen className="w-5 h-5" />
           </div>
-
-          <div className="flex items-center gap-2 font-naskh text-xs">
-            <button
-              onClick={() => copyText(FULL_TRANSCRIPT_URDU, 'full')}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 transition-colors"
-            >
-              {copiedId === 'full' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-              <span>{copiedId === 'full' ? 'کاپی ہو گیا!' : 'مکمل ٹرانسکرپٹ کاپی'}</span>
-            </button>
-
-            <button
-              onClick={downloadTranscript}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 transition-colors"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>ڈاؤنلوڈ</span>
-            </button>
-
-            <button
-              onClick={() => window.print()}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 transition-colors"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>پرنٹ</span>
-            </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-white text-sm sm:text-base">تحقیقی مقالہ</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-800/80 text-emerald-200 font-mono">
+                {TRANSCRIPT_SECTIONS.length} ابواب
+              </span>
+            </div>
+            <p className="text-xs text-stone-400">
+              احادیث و آثارِ صحابہ کی روشنی میں باقاعدہ ابواب وار فکری مطالعہ
+            </p>
           </div>
         </div>
 
-        {/* Scrubber slider */}
-        <div className="space-y-1.5">
-          <input
-            type="range"
-            min="0"
-            max={totalSeconds}
-            value={currentSeconds}
-            onChange={e => handleSeek(Number(e.target.value))}
-            className="w-full h-2 bg-stone-700 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-          />
-          <div className="flex items-center justify-between text-[11px] text-stone-400 font-naskh">
-            <span className="truncate max-w-md">
-              {TRANSCRIPT_SECTIONS.find(
-                s => currentSeconds >= s.startSeconds && currentSeconds <= s.endSeconds
-              )?.title || 'صوتی گفتگو'}
-            </span>
-            <span className="font-mono">42 منٹ 37 سیکنڈ</span>
-          </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end text-xs">
+          <button
+            onClick={() => copyText(FULL_TRANSCRIPT_URDU, 'full')}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 transition-colors cursor-pointer"
+            title="مکمل مقالہ کاپی کریں"
+          >
+            {copiedId === 'full' ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            <span>{copiedId === 'full' ? 'کاپی ہو گیا!' : 'مکمل مقالہ کاپی'}</span>
+          </button>
+
+          <button
+            onClick={downloadArticle}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 transition-colors cursor-pointer"
+            title="ٹیکسٹ فائل ڈاؤنلوڈ کریں"
+          >
+            <Download className="w-4 h-4" />
+            <span>ڈاؤنلوڈ</span>
+          </button>
+
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 transition-colors cursor-pointer"
+            title="مقالہ پرنٹ کریں"
+          >
+            <Printer className="w-4 h-4" />
+            <span>پرنٹ</span>
+          </button>
         </div>
       </div>
 
-      {/* Mode Switcher & In-transcript search */}
+      {/* Mode Switcher & In-article search */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-3 bg-stone-100 p-2.5 rounded-xl font-naskh">
         <div className="flex items-center gap-1 w-full md:w-auto">
           <button
             onClick={() => setViewMode('chapters')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               viewMode === 'chapters'
                 ? 'bg-emerald-800 text-white shadow-xs'
                 : 'text-stone-700 hover:bg-stone-200'
             }`}
           >
-            ابواب وار جائزہ (22 ابواب)
+            ابواب وار مطالعہ ({TRANSCRIPT_SECTIONS.length} ابواب)
           </button>
           <button
             onClick={() => setViewMode('continuous')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               viewMode === 'continuous'
                 ? 'bg-emerald-800 text-white shadow-xs'
                 : 'text-stone-700 hover:bg-stone-200'
             }`}
           >
-            مسلسل مطالعہ
+            مسلسل مطالعہ (مضمون موڈ)
           </button>
           <button
             onClick={() => setViewMode('references')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
               viewMode === 'references'
                 ? 'bg-emerald-800 text-white shadow-xs'
                 : 'text-stone-700 hover:bg-stone-200'
             }`}
           >
-            احادیث و مراجع ({HADITH_REFERENCES.length})
+            احادیث و فقہی مراجع ({HADITH_REFERENCES.length})
           </button>
         </div>
 
@@ -276,7 +164,7 @@ export const TranscriptArticleSection: React.FC<TranscriptArticleSectionProps> =
           <Search className="w-3.5 h-3.5 text-stone-400 absolute right-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="اس صوتی مقالے میں تلاش کریں..."
+            placeholder="اس مقالے کے ابواب میں تلاش کریں..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full bg-white border border-stone-200 rounded-lg pr-8 pl-3 py-1 text-xs text-stone-800 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
@@ -295,8 +183,7 @@ export const TranscriptArticleSection: React.FC<TranscriptArticleSectionProps> =
       {/* Chapters View */}
       {viewMode === 'chapters' && (
         <div className="space-y-6">
-          {filteredSections.map((sec, idx) => {
-            const isActive = activeSectionId === sec.id;
+          {filteredSections.map(sec => {
             const isBookmarked = bookmarkedSecIds.includes(sec.id);
 
             return (
@@ -305,45 +192,36 @@ export const TranscriptArticleSection: React.FC<TranscriptArticleSectionProps> =
                 ref={el => {
                   sectionRefs.current[sec.id] = el;
                 }}
-                className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden shadow-xs ${
-                  isActive
-                    ? 'border-emerald-500 ring-4 ring-emerald-500/10'
-                    : 'border-stone-200 hover:border-stone-300'
-                }`}
+                className="bg-white rounded-2xl border border-stone-200 hover:border-stone-300 transition-all duration-300 overflow-hidden shadow-xs"
               >
                 {/* Heading Bar */}
-                <div className="bg-stone-50/90 border-b border-stone-200/80 px-5 py-3 flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 font-naskh">
-                    <button
-                      onClick={() => handleSeek(sec.startSeconds, sec.id)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-800 text-white text-xs font-mono font-bold hover:bg-emerald-700 transition-colors"
-                      title="اس باب سے آڈیو سنیں"
-                    >
-                      <Play className="w-3 h-3 fill-current" />
-                      <span>{sec.startTime} - {sec.endTime}</span>
-                    </button>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-stone-200 text-stone-800 font-semibold">
-                      {sec.speaker}
+                <div className="bg-stone-50/90 border-b border-stone-200/80 px-5 py-3 flex flex-wrap items-center justify-between gap-3 font-naskh">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-800 text-white text-xs font-bold font-mono">
+                      باب {sec.chapterNumber}
+                    </span>
+                    <span className="text-xs text-stone-500 font-semibold">
+                      {sec.title}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 font-naskh">
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => toggleBookmark(sec.id)}
-                      className={`p-1.5 rounded-lg border transition-colors ${
+                      className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
                         isBookmarked
                           ? 'bg-amber-50 text-amber-700 border-amber-300'
                           : 'text-stone-400 hover:text-stone-600 border-transparent hover:bg-stone-100'
                       }`}
-                      title={isBookmarked ? 'محفوظ کردہ سے ہٹائیں' : 'یہ حصہ محفوظ کریں'}
+                      title={isBookmarked ? 'محفوظ کردہ سے ہٹائیں' : 'یہ باب محفوظ کریں'}
                     >
                       <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-amber-500' : ''}`} />
                     </button>
 
                     <button
-                      onClick={() => copyText(`[${sec.startTime}] ${sec.speaker}: ${sec.text}`, sec.id)}
-                      className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
-                      title="یہ عبارت کاپی کریں"
+                      onClick={() => copyText(`[باب ${sec.chapterNumber}: ${sec.title}]\n${sec.text}`, sec.id)}
+                      className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+                      title="یہ باب کاپی کریں"
                     >
                       {copiedId === sec.id ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                     </button>
@@ -353,16 +231,18 @@ export const TranscriptArticleSection: React.FC<TranscriptArticleSectionProps> =
                 {/* Body Content */}
                 <div className="p-5 sm:p-7 space-y-4">
                   <h3 className="text-lg sm:text-xl font-bold text-stone-900 border-b border-stone-100 pb-2">
-                    باب {idx + 1}: {sec.title}
+                    باب {sec.chapterNumber}: {sec.title}
                   </h3>
 
                   <div
                     className={`text-stone-800 whitespace-pre-line text-justify ${
+                      fontFamily === 'nastaliq' ? 'font-nastaliq' : 'font-naskh'
+                    } ${
                       lineSpacing === 'normal'
                         ? 'leading-normal'
                         : lineSpacing === 'relaxed'
-                        ? 'leading-[2.3]'
-                        : 'leading-[2.7]'
+                        ? 'leading-[2.4]'
+                        : 'leading-[2.8]'
                     }`}
                     style={{ fontSize: `${fontSize}px` }}
                   >
@@ -392,11 +272,13 @@ export const TranscriptArticleSection: React.FC<TranscriptArticleSectionProps> =
         </div>
       )}
 
-      {/* Continuous Reading View */}
+      {/* Continuous Reading View (Full Essay Flow) */}
       {viewMode === 'continuous' && (
-        <div className="bg-white rounded-2xl border border-stone-200 p-6 sm:p-10 shadow-xs">
+        <div className="bg-white rounded-2xl border border-stone-200 p-6 sm:p-10 shadow-xs space-y-8">
           <div
-            className={`space-y-6 text-stone-800 ${
+            className={`space-y-8 text-stone-800 ${
+              fontFamily === 'nastaliq' ? 'font-nastaliq' : 'font-naskh'
+            } ${
               lineSpacing === 'normal'
                 ? 'leading-normal'
                 : lineSpacing === 'relaxed'
@@ -405,14 +287,13 @@ export const TranscriptArticleSection: React.FC<TranscriptArticleSectionProps> =
             }`}
             style={{ fontSize: `${fontSize}px` }}
           >
-            {TRANSCRIPT_SECTIONS.map((sec, idx) => (
-              <div key={sec.id} className="relative group p-2 hover:bg-stone-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-1.5 font-naskh text-xs text-stone-500">
-                  <span className="font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/50">
-                    {sec.startTime}
+            {TRANSCRIPT_SECTIONS.map(sec => (
+              <div key={sec.id} className="relative pb-6 border-b border-stone-100 last:border-0">
+                <div className="flex items-center gap-2 mb-2 font-naskh text-xs text-stone-500">
+                  <span className="font-bold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60 font-mono">
+                    باب {sec.chapterNumber}
                   </span>
-                  <span className="font-bold text-stone-800">{sec.speaker}:</span>
-                  <span className="text-stone-500 font-semibold">{sec.title}</span>
+                  <span className="font-bold text-stone-900">{sec.title}</span>
                 </div>
                 <p className="whitespace-pre-line text-justify">{sec.text}</p>
               </div>
